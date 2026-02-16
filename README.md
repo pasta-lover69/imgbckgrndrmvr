@@ -1,71 +1,69 @@
-# Image Background Remover
+# AI Background Remover
 
-A precise image background removal tool powered by **rembg** (U2-Net AI model), built with Python/Flask and deployable to Vercel.
+AI-powered background remover that runs entirely in your browser. Upload any image and get a precise, transparent PNG — no server, no signup, no limits. Built with the U2-Net deep learning model via WebAssembly.
 
 ## Project Structure
 
 ```
 imgbckgrndrmvr/
-├── api/
-│   └── index.py          # Flask API (serverless function)
 ├── public/
-│   └── index.html        # Frontend UI
-├── requirements.txt      # Python dependencies
+│   └── index.html        # Full app (UI + client-side AI processing)
 ├── vercel.json           # Vercel deployment config
 └── .gitignore
 ```
 
 ## Features
 
-- Drag & drop or click to upload images
-- Precise background removal using U2-Net deep learning model
-- Alpha matting for clean, refined edges
+- **AI-powered** — Uses U2-Net deep learning model for precise segmentation
+- **Runs in-browser** — No server needed; AI model runs via WebAssembly + ONNX Runtime Web
+- **Privacy-first** — Your images never leave your device
+- Drag & drop or click to upload
 - Download result as transparent PNG
 - Supports PNG, JPG, JPEG, WEBP, BMP (up to 10MB)
 - Responsive dark-themed UI
+- ~40MB AI model downloaded on first use, cached by browser for subsequent uses
 
 ## Run Locally
 
-1. **Create a virtual environment:**
+Just serve the `public/` folder with any static server:
 
-   ```bash
-   python -m venv venv
-   source venv/bin/activate    # Linux/Mac
-   venv\Scripts\activate       # Windows
-   ```
+```bash
+# Using Python
+python -m http.server 3000 --directory public
 
-2. **Install dependencies:**
+# Using Node.js
+npx serve public
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Using Vercel CLI
+vercel dev
+```
 
-3. **Run the dev server:**
+The app will be available at `http://localhost:3000`.
 
-   ```bash
-   # Install Vercel CLI if you haven't
-   npm i -g vercel
+## Deploy to Vercel
 
-   # Run locally
-   vercel dev
-   ```
+1. **Push to GitHub**
+2. **Import project on [vercel.com](https://vercel.com)**
+3. Vercel auto-deploys as a static site — no build step, no serverless functions
 
-   The app will be available at `http://localhost:3000`.
+Or via CLI:
 
-<<<<<<< HEAD
-=======
+```bash
+npm i -g vercel
+vercel --prod
+```
 
->>>>>>> 6de6081ac6b150e6516cdd354720ab8ef689ef19
 ## How It Works
 
 1. User uploads an image via the web UI
-2. The image is sent to the `/api/remove-bg` endpoint
-3. The Flask serverless function uses `rembg` with alpha matting to precisely remove the background
-4. The processed transparent PNG is returned and displayed
+2. The `@imgly/background-removal` library loads the U2-Net ONNX model (cached after first download)
+3. The AI model runs entirely in the browser using WebAssembly
+4. The background is removed and a transparent PNG is displayed
 5. User can download the result
 
 ## Tech Stack
 
-- **Backend:** Python, Flask, rembg (U2-Net), Pillow
-- **Frontend:** Vanilla HTML/CSS/JS
-- **Deployment:** Vercel Serverless Functions
+- **AI Model:** U2-Net (via `@imgly/background-removal`)
+- **Runtime:** ONNX Runtime Web (WebAssembly)
+- **Frontend:** Vanilla HTML/CSS/JS (ES Modules)
+- **Deployment:** Vercel (static site)
