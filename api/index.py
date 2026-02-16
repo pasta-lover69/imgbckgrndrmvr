@@ -3,8 +3,13 @@ from flask_cors import CORS
 from rembg import remove
 from PIL import Image
 import io
+import os
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder=os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "public"),
+    static_url_path="",
+)
 CORS(app)
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -36,13 +41,17 @@ def remove_background():
     try:
         input_image = Image.open(io.BytesIO(file_bytes))
 
-        output_bytes = remove(
-            file_bytes,
-            alpha_matting=True,
-            alpha_matting_foreground_threshold=240,
-            alpha_matting_background_threshold=10,
-            alpha_matting_erode_size=10,
-        )
+        # Try with alpha matting first for cleaner edges, fall back to standard
+        try:
+            output_bytes = remove(
+                file_bytes,
+                alpha_matting=True,
+                alpha_matting_foreground_threshold=240,
+                alpha_matting_background_threshold=10,
+                alpha_matting_erode_size=10,
+            )
+        except Exception:
+            output_bytes = remove(file_bytes)
 
         return send_file(
             io.BytesIO(output_bytes),
@@ -58,3 +67,12 @@ def remove_background():
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
+
+
+@app.route("/")
+def index():
+    return app.send_static_file("index.html")
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=3000)
