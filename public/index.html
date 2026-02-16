@@ -60,7 +60,6 @@
         gap: 2rem;
       }
 
-      /* Upload Area */
       .upload-area {
         width: 100%;
         border: 2px dashed #2a2a2a;
@@ -104,7 +103,6 @@
         cursor: pointer;
       }
 
-      /* Preview Section */
       .preview-section {
         width: 100%;
         display: none;
@@ -149,7 +147,6 @@
         border-radius: 8px;
       }
 
-      /* Checkerboard pattern for transparent background */
       .result-card .image-container {
         background-image:
           linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
@@ -164,7 +161,6 @@
           -10px 0px;
       }
 
-      /* Actions */
       .actions {
         display: flex;
         gap: 1rem;
@@ -183,23 +179,6 @@
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-      }
-
-      .btn-primary {
-        background: linear-gradient(135deg, #6366f1, #7c3aed);
-        color: white;
-      }
-
-      .btn-primary:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-      }
-
-      .btn-primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
       }
 
       .btn-secondary {
@@ -223,7 +202,6 @@
         box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
       }
 
-      /* Loading */
       .loading-overlay {
         position: absolute;
         inset: 0;
@@ -261,7 +239,12 @@
         font-size: 0.85rem;
       }
 
-      /* Error Toast */
+      .progress-text {
+        color: #6366f1;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+
       .toast {
         position: fixed;
         bottom: 2rem;
@@ -298,11 +281,9 @@
         .preview-section.active {
           grid-template-columns: 1fr;
         }
-
         .actions {
           flex-direction: column;
         }
-
         .btn {
           width: 100%;
           justify-content: center;
@@ -313,7 +294,10 @@
   <body>
     <header>
       <h1>Background Remover</h1>
-      <p>Upload an image and get a precise background removal instantly</p>
+      <p>
+        Upload an image and get a precise background removal — processed
+        entirely in your browser
+      </p>
     </header>
 
     <main>
@@ -350,7 +334,8 @@
           </div>
           <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner"></div>
-            <p>Removing background…</p>
+            <p id="loadingText">Removing background…</p>
+            <p class="progress-text" id="progressText"></p>
           </div>
         </div>
       </div>
@@ -388,16 +373,22 @@
     <div class="toast" id="toast"></div>
 
     <footer>
-      <p>Powered by rembg &amp; U2-Net • Background removal AI</p>
+      <p>
+        Powered by @imgly/background-removal — AI runs entirely in your browser
+      </p>
     </footer>
 
-    <script>
+    <script type="module">
+      import imglyRemoveBackground from "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm";
+
       const uploadArea = document.getElementById("uploadArea");
       const fileInput = document.getElementById("fileInput");
       const previewSection = document.getElementById("previewSection");
       const originalImage = document.getElementById("originalImage");
       const resultImage = document.getElementById("resultImage");
       const loadingOverlay = document.getElementById("loadingOverlay");
+      const loadingText = document.getElementById("loadingText");
+      const progressText = document.getElementById("progressText");
       const actions = document.getElementById("actions");
       const downloadBtn = document.getElementById("downloadBtn");
       const toast = document.getElementById("toast");
@@ -439,7 +430,6 @@
           showToast("Invalid file type. Please upload PNG, JPG, WEBP, or BMP.");
           return;
         }
-
         if (file.size > 10 * 1024 * 1024) {
           showToast("File too large. Maximum size is 10MB.");
           return;
@@ -458,54 +448,38 @@
         actions.style.display = "flex";
         downloadBtn.style.display = "none";
         resultImage.src = "";
+        loadingText.textContent = "Loading AI model…";
+        progressText.textContent =
+          "First run downloads ~40MB model (cached after)";
         loadingOverlay.classList.add("active");
 
-        // Upload to API
-        const formData = new FormData();
-        formData.append("image", file);
-
         try {
-          const response = await fetch("/api/remove-bg", {
-            method: "POST",
-            body: formData,
+          const blob = await imglyRemoveBackground(file, {
+            progress: (key, current, total) => {
+              if (key.includes("fetch")) {
+                const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+                loadingText.textContent = "Downloading AI model…";
+                progressText.textContent = pct + "%";
+              } else if (key.includes("compute")) {
+                loadingText.textContent = "Removing background…";
+                progressText.textContent = "Processing";
+              }
+            },
           });
 
-          const cloned = response.clone();
-
-          if (!response.ok) {
-            let errorMsg = "Processing failed";
-            try {
-              const text = await cloned.text();
-              try {
-                const err = JSON.parse(text);
-                errorMsg = err.error || errorMsg;
-              } catch {
-                if (text) errorMsg = text;
-              }
-            } catch {}
-            throw new Error(errorMsg);
-          }
-
-          const contentType = response.headers.get("content-type") || "";
-          if (!contentType.includes("image")) {
-            throw new Error(
-              "Server did not return an image. Check server logs.",
-            );
-          }
-
-          const blob = await response.blob();
           if (resultBlobUrl) URL.revokeObjectURL(resultBlobUrl);
           resultBlobUrl = URL.createObjectURL(blob);
           resultImage.src = resultBlobUrl;
           downloadBtn.style.display = "inline-flex";
         } catch (err) {
+          console.error("Background removal error:", err);
           showToast(err.message || "Something went wrong. Please try again.");
         } finally {
           loadingOverlay.classList.remove("active");
         }
       }
 
-      function downloadResult() {
+      window.downloadResult = function () {
         if (!resultBlobUrl) return;
         const a = document.createElement("a");
         a.href = resultBlobUrl;
@@ -513,9 +487,9 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-      }
+      };
 
-      function resetAll() {
+      window.resetAll = function () {
         uploadArea.style.display = "";
         previewSection.classList.remove("active");
         actions.style.display = "none";
@@ -527,7 +501,7 @@
           URL.revokeObjectURL(resultBlobUrl);
           resultBlobUrl = null;
         }
-      }
+      };
 
       function showToast(message) {
         toast.textContent = message;
