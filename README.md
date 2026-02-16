@@ -52,6 +52,10 @@ imgbckgrndrmvr/
 
    The app will be available at `http://localhost:3000`.
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6de6081ac6b150e6516cdd354720ab8ef689ef19
 ## How It Works
 
 1. User uploads an image via the web UI
