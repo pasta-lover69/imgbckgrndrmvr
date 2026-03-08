@@ -3,8 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%236366f1'/><stop offset='50%25' stop-color='%23a855f7'/><stop offset='100%25' stop-color='%23ec4899'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><path d='M30 70V30h10v40H30zm15-20h10v20H45V50zm15-10h10v30H60V40z' fill='white' opacity='0.9'/><path d='M25 45h55' stroke='white' stroke-width='4' stroke-dasharray='8 4' opacity='0.5'/></svg>"
+    />
     <title>AI Background Remover</title>
     <style>
+      /* ===== RESET & BASE ===== */
       *,
       *::before,
       *::after {
@@ -14,11 +20,7 @@
       }
 
       body {
-        font-family:
-          "Segoe UI",
-          system-ui,
-          -apple-system,
-          sans-serif;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
         background: #0a0a0a;
         color: #e5e5e5;
         min-height: 100vh;
@@ -27,6 +29,7 @@
         align-items: center;
       }
 
+      /* ===== HEADER ===== */
       header {
         width: 100%;
         padding: 2rem;
@@ -49,6 +52,7 @@
         font-size: 0.9rem;
       }
 
+      /* ===== MAIN ===== */
       main {
         flex: 1;
         width: 100%;
@@ -60,6 +64,7 @@
         gap: 2rem;
       }
 
+      /* ===== UPLOAD AREA ===== */
       .upload-area {
         width: 100%;
         border: 2px dashed #2a2a2a;
@@ -103,6 +108,7 @@
         cursor: pointer;
       }
 
+      /* ===== PREVIEW SECTION ===== */
       .preview-section {
         width: 100%;
         display: none;
@@ -129,6 +135,18 @@
         letter-spacing: 0.05em;
         color: #737373;
         border-bottom: 1px solid #1a1a1a;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .edit-count {
+        font-size: 0.7rem;
+        background: #6366f1;
+        color: white;
+        padding: 0.15rem 0.5rem;
+        border-radius: 99px;
+        font-weight: 600;
       }
 
       .preview-card .image-container {
@@ -145,27 +163,25 @@
         max-height: 400px;
         object-fit: contain;
         border-radius: 8px;
+        transition: opacity 0.3s ease;
       }
 
       .result-card .image-container {
-        background-image:
-          linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
+        background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%),
           linear-gradient(-45deg, #1a1a1a 25%, transparent 25%),
           linear-gradient(45deg, transparent 75%, #1a1a1a 75%),
           linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
         background-size: 20px 20px;
-        background-position:
-          0 0,
-          0 10px,
-          10px -10px,
-          -10px 0px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
       }
 
+      /* ===== ACTIONS ===== */
       .actions {
         display: flex;
         gap: 1rem;
         width: 100%;
         justify-content: center;
+        flex-wrap: wrap;
       }
 
       .btn {
@@ -202,6 +218,23 @@
         box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
       }
 
+      .btn-undo {
+        background: #1a1a1a;
+        color: #f59e0b;
+        border: 1px solid #2a2a2a;
+      }
+
+      .btn-undo:hover {
+        background: #222222;
+        border-color: #f59e0b44;
+      }
+
+      .btn-undo:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      /* ===== LOADING OVERLAY ===== */
       .loading-overlay {
         position: absolute;
         inset: 0;
@@ -245,6 +278,7 @@
         font-weight: 600;
       }
 
+      /* ===== TOAST ===== */
       .toast {
         position: fixed;
         bottom: 2rem;
@@ -258,7 +292,7 @@
         font-weight: 500;
         opacity: 0;
         transition: all 0.3s ease;
-        z-index: 100;
+        z-index: 1000;
         max-width: 90%;
         text-align: center;
       }
@@ -268,6 +302,11 @@
         transform: translateX(-50%) translateY(0);
       }
 
+      .toast.toast-success {
+        background: #059669;
+      }
+
+      /* ===== FOOTER ===== */
       footer {
         padding: 1.5rem;
         text-align: center;
@@ -277,6 +316,426 @@
         width: 100%;
       }
 
+      /* ===== BEFORE/AFTER SLIDER ===== */
+      .comparison-container {
+        width: 100%;
+        display: none;
+        margin-top: 0.5rem;
+      }
+
+      .comparison-container.active {
+        display: block;
+      }
+
+      .comparison-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
+        overflow: hidden;
+        border-radius: 16px;
+        background: #111;
+        border: 1px solid #1a1a1a;
+        user-select: none;
+      }
+
+      .comparison-wrapper img {
+        display: block;
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+      }
+
+      .comparison-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        overflow: hidden;
+        border-right: 2px solid #6366f1;
+      }
+
+      .comparison-overlay img {
+        display: block;
+        height: 100%;
+        max-height: 400px;
+        object-fit: contain;
+      }
+
+      .comparison-handle {
+        position: absolute;
+        top: 0;
+        width: 40px;
+        height: 100%;
+        cursor: ew-resize;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translateX(-50%);
+        z-index: 5;
+      }
+
+      .comparison-handle-icon {
+        width: 32px;
+        height: 32px;
+        background: #6366f1;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(99, 102, 241, 0.5);
+      }
+
+      .comparison-handle-icon svg {
+        width: 16px;
+        height: 16px;
+        color: white;
+      }
+
+      .comparison-labels {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+        color: #525252;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+      }
+
+      /* ===== CHAT WIDGET ===== */
+      .chat-fab {
+        position: fixed;
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 24px rgba(99, 102, 241, 0.4);
+        transition: all 0.3s ease;
+        z-index: 900;
+        opacity: 0;
+        transform: scale(0);
+        pointer-events: none;
+      }
+
+      .chat-fab.visible {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: auto;
+      }
+
+      .chat-fab:hover {
+        transform: scale(1.08);
+        box-shadow: 0 6px 30px rgba(99, 102, 241, 0.6);
+      }
+
+      .chat-fab svg {
+        width: 24px;
+        height: 24px;
+        color: white;
+        transition: transform 0.3s ease;
+      }
+
+      .chat-fab.open svg {
+        transform: rotate(90deg);
+      }
+
+      .chat-fab .badge {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 18px;
+        height: 18px;
+        background: #ec4899;
+        border-radius: 50%;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #0a0a0a;
+      }
+
+      .chat-panel {
+        position: fixed;
+        bottom: 6rem;
+        right: 1.5rem;
+        width: 380px;
+        max-height: 520px;
+        background: #111111;
+        border: 1px solid #1a1a1a;
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        z-index: 901;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+        pointer-events: none;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+      }
+
+      .chat-panel.open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+
+      .chat-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #1a1a1a;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+      }
+
+      .chat-header-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .chat-header-icon svg {
+        width: 16px;
+        height: 16px;
+        color: white;
+      }
+
+      .chat-header-text h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #e5e5e5;
+      }
+
+      .chat-header-text p {
+        font-size: 0.7rem;
+        color: #525252;
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-height: 200px;
+        max-height: 320px;
+        scroll-behavior: smooth;
+      }
+
+      .chat-messages::-webkit-scrollbar {
+        width: 4px;
+      }
+
+      .chat-messages::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .chat-messages::-webkit-scrollbar-thumb {
+        background: #2a2a2a;
+        border-radius: 2px;
+      }
+
+      .chat-msg {
+        max-width: 85%;
+        padding: 0.65rem 0.9rem;
+        border-radius: 12px;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        animation: msgIn 0.25s ease;
+      }
+
+      @keyframes msgIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .chat-msg.ai {
+        background: #1a1a1a;
+        color: #d4d4d4;
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+      }
+
+      .chat-msg.user {
+        background: linear-gradient(135deg, #6366f1, #7c3aed);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+      }
+
+      .chat-msg.system {
+        background: transparent;
+        color: #525252;
+        font-size: 0.75rem;
+        text-align: center;
+        align-self: center;
+        padding: 0.25rem;
+        max-width: 100%;
+      }
+
+      .chat-msg strong {
+        color: #a78bfa;
+        font-weight: 600;
+      }
+
+      .chat-typing {
+        display: none;
+        align-self: flex-start;
+        padding: 0.65rem 0.9rem;
+        background: #1a1a1a;
+        border-radius: 12px;
+        border-bottom-left-radius: 4px;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .chat-typing.active {
+        display: flex;
+      }
+
+      .chat-typing-dot {
+        width: 6px;
+        height: 6px;
+        background: #525252;
+        border-radius: 50%;
+        animation: typingBounce 1.4s infinite ease-in-out;
+      }
+
+      .chat-typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+
+      .chat-typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+
+      @keyframes typingBounce {
+        0%,
+        80%,
+        100% {
+          transform: scale(0.7);
+          opacity: 0.4;
+        }
+        40% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .chat-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        padding: 0 1rem;
+        flex-shrink: 0;
+      }
+
+      .chat-suggestion {
+        padding: 0.35rem 0.7rem;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 99px;
+        font-size: 0.72rem;
+        color: #a78bfa;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+      }
+
+      .chat-suggestion:hover {
+        background: #222;
+        border-color: #6366f1;
+        color: #c4b5fd;
+      }
+
+      .chat-input-area {
+        padding: 0.75rem 1rem;
+        border-top: 1px solid #1a1a1a;
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
+      .chat-input {
+        flex: 1;
+        background: #0a0a0a;
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 0.6rem 0.85rem;
+        color: #e5e5e5;
+        font-size: 0.82rem;
+        font-family: inherit;
+        outline: none;
+        transition: border-color 0.2s ease;
+        resize: none;
+        max-height: 80px;
+        min-height: 36px;
+        line-height: 1.4;
+      }
+
+      .chat-input:focus {
+        border-color: #6366f1;
+      }
+
+      .chat-input::placeholder {
+        color: #404040;
+      }
+
+      .chat-send {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      .chat-send:hover {
+        transform: scale(1.05);
+      }
+
+      .chat-send:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .chat-send svg {
+        width: 16px;
+        height: 16px;
+        color: white;
+      }
+
+      /* ===== RESPONSIVE ===== */
       @media (max-width: 640px) {
         .preview-section.active {
           grid-template-columns: 1fr;
@@ -288,6 +747,17 @@
           width: 100%;
           justify-content: center;
         }
+        .chat-panel {
+          right: 0.5rem;
+          left: 0.5rem;
+          bottom: 5rem;
+          width: auto;
+          max-height: 70vh;
+        }
+        .chat-fab {
+          bottom: 1rem;
+          right: 1rem;
+        }
       }
     </style>
   </head>
@@ -295,12 +765,13 @@
     <header>
       <h1>AI Background Remover</h1>
       <p>
-        Upload an image and get a precise AI-powered background removal —
-        processed entirely in your browser
+        Upload an image and use AI chat to edit it — remove backgrounds, objects,
+        or isolate elements
       </p>
     </header>
 
     <main>
+      <!-- Upload Area -->
       <div class="upload-area" id="uploadArea">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -320,6 +791,7 @@
         <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.webp,.bmp" />
       </div>
 
+      <!-- Preview Cards -->
       <div class="preview-section" id="previewSection">
         <div class="preview-card">
           <div class="label">Original</div>
@@ -328,24 +800,74 @@
           </div>
         </div>
         <div class="preview-card result-card" style="position: relative">
-          <div class="label">Result</div>
+          <div class="label">
+            <span>Result</span>
+            <span class="edit-count" id="editCount" style="display: none"
+              >0 edits</span
+            >
+          </div>
           <div class="image-container">
             <img id="resultImage" alt="Result" />
           </div>
           <div class="loading-overlay" id="loadingOverlay">
             <div class="spinner"></div>
-            <p id="loadingText">Removing background…</p>
+            <p id="loadingText">Removing background...</p>
             <p class="progress-text" id="progressText"></p>
           </div>
         </div>
       </div>
 
+      <!-- Before/After Comparison -->
+      <div class="comparison-container" id="comparisonContainer">
+        <div class="comparison-labels">
+          <span>Original</span>
+          <span>Edited</span>
+        </div>
+        <div class="comparison-wrapper" id="comparisonWrapper">
+          <img id="comparisonBase" alt="Edited" />
+          <div class="comparison-overlay" id="comparisonOverlay">
+            <img id="comparisonOriginal" alt="Original" />
+          </div>
+          <div class="comparison-handle" id="comparisonHandle">
+            <div class="comparison-handle-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 3l-5 9 5 9M16 3l5 9-5 9" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
       <div class="actions" id="actions" style="display: none">
+        <button
+          class="btn btn-undo"
+          id="undoBtn"
+          disabled
+          onclick="window.appUndo()"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"
+            />
+          </svg>
+          Undo
+        </button>
         <button
           class="btn btn-download"
           id="downloadBtn"
           style="display: none"
-          onclick="downloadResult()"
+          onclick="window.downloadResult()"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -364,7 +886,30 @@
           </svg>
           Download PNG
         </button>
-        <button class="btn btn-secondary" onclick="resetAll()">
+        <button
+          class="btn btn-secondary"
+          id="compareBtn"
+          style="display: none"
+          onclick="window.toggleComparison()"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8 3l-5 9 5 9M16 3l5 9-5 9"
+            />
+          </svg>
+          Compare
+        </button>
+        <button class="btn btn-secondary" onclick="window.resetAll()">
           Upload Another
         </button>
       </div>
@@ -374,45 +919,176 @@
 
     <footer>
       <p>
-        Powered by @imgly/background-removal — AI runs entirely in your browser
+        Powered by @imgly/background-removal + Transformers.js + Claude AI —
+        runs in your browser
       </p>
     </footer>
 
+    <!-- ===== CHAT WIDGET ===== -->
+    <button class="chat-fab" id="chatFab" title="AI Edit Assistant">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+        />
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 2C6.477 2 2 6.015 2 10.943c0 2.789 1.342 5.277 3.441 6.897.054.042.088.107.071.174l-.604 2.396a.375.375 0 00.52.413l2.725-1.135a.503.503 0 01.354-.013A11.092 11.092 0 0012 20c5.523 0 10-4.128 10-9.057C22 6.015 17.523 2 12 2z"
+        />
+      </svg>
+      <span class="badge" id="chatBadge">1</span>
+    </button>
+
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+        <div class="chat-header-icon">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
+            />
+          </svg>
+        </div>
+        <div class="chat-header-text">
+          <h3>AI Edit Assistant</h3>
+          <p>Tell me what to do with your image</p>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chatMessages">
+        <!-- Messages rendered by JS -->
+      </div>
+
+      <div class="chat-typing" id="chatTyping">
+        <div class="chat-typing-dot"></div>
+        <div class="chat-typing-dot"></div>
+        <div class="chat-typing-dot"></div>
+      </div>
+
+      <div class="chat-suggestions" id="chatSuggestions">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div class="chat-input-area">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="e.g. Remove the background..."
+          rows="1"
+        ></textarea>
+        <button class="chat-send" id="chatSend" disabled>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== SCRIPTS ===== -->
     <script type="module">
       import { removeBackground } from "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm";
 
-      const uploadArea = document.getElementById("uploadArea");
-      const fileInput = document.getElementById("fileInput");
-      const previewSection = document.getElementById("previewSection");
-      const originalImage = document.getElementById("originalImage");
-      const resultImage = document.getElementById("resultImage");
-      const loadingOverlay = document.getElementById("loadingOverlay");
-      const loadingText = document.getElementById("loadingText");
-      const progressText = document.getElementById("progressText");
-      const actions = document.getElementById("actions");
-      const downloadBtn = document.getElementById("downloadBtn");
-      const toast = document.getElementById("toast");
+      // ============================================================
+      //  STATE
+      // ============================================================
+      const state = {
+        originalFile: null, // The uploaded File object
+        originalDataUrl: null, // data URL of original
+        currentBlob: null, // Current result as Blob
+        currentBlobUrl: null, // Object URL of current result
+        imageHistory: [], // Stack of { blob, blobUrl } for undo
+        editCount: 0,
+        chatOpen: false,
+        chatMessages: [], // { role: 'user'|'assistant', content }  — for Claude API
+        chatProcessing: false,
+        imageUploaded: false,
+        segModelLoaded: false,
+        segPipeline: null,
+        comparisonVisible: false
+      };
 
-      let resultBlobUrl = null;
+      // ============================================================
+      //  DOM ELEMENTS
+      // ============================================================
+      const $ = (id) => document.getElementById(id);
+      const uploadArea = $("uploadArea");
+      const fileInput = $("fileInput");
+      const previewSection = $("previewSection");
+      const originalImage = $("originalImage");
+      const resultImage = $("resultImage");
+      const loadingOverlay = $("loadingOverlay");
+      const loadingText = $("loadingText");
+      const progressText = $("progressText");
+      const actions = $("actions");
+      const downloadBtn = $("downloadBtn");
+      const compareBtn = $("compareBtn");
+      const undoBtn = $("undoBtn");
+      const editCountEl = $("editCount");
+      const toastEl = $("toast");
+      const chatFab = $("chatFab");
+      const chatPanel = $("chatPanel");
+      const chatMessagesEl = $("chatMessages");
+      const chatTyping = $("chatTyping");
+      const chatSuggestions = $("chatSuggestions");
+      const chatInput = $("chatInput");
+      const chatSend = $("chatSend");
+      const chatBadge = $("chatBadge");
+      const comparisonContainer = $("comparisonContainer");
+      const comparisonWrapper = $("comparisonWrapper");
+      const comparisonBase = $("comparisonBase");
+      const comparisonOriginal = $("comparisonOriginal");
+      const comparisonOverlay = $("comparisonOverlay");
+      const comparisonHandle = $("comparisonHandle");
 
-      // Drag & drop
-      ["dragenter", "dragover"].forEach((evt) => {
+      // ============================================================
+      //  TOAST
+      // ============================================================
+      function showToast(message, type = "error") {
+        toastEl.textContent = message;
+        toastEl.className = "toast show" + (type === "success" ? " toast-success" : "");
+        setTimeout(() => (toastEl.className = "toast"), 4000);
+      }
+
+      // ============================================================
+      //  FILE UPLOAD
+      // ============================================================
+      ["dragenter", "dragover"].forEach((evt) =>
         uploadArea.addEventListener(evt, (e) => {
           e.preventDefault();
           uploadArea.classList.add("drag-over");
-        });
-      });
+        })
+      );
 
-      ["dragleave", "drop"].forEach((evt) => {
+      ["dragleave", "drop"].forEach((evt) =>
         uploadArea.addEventListener(evt, (e) => {
           e.preventDefault();
           uploadArea.classList.remove("drag-over");
-        });
-      });
+        })
+      );
 
       uploadArea.addEventListener("drop", (e) => {
-        const files = e.dataTransfer.files;
-        if (files.length) handleFile(files[0]);
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
       });
 
       fileInput.addEventListener("change", () => {
@@ -420,12 +1096,7 @@
       });
 
       async function handleFile(file) {
-        const validTypes = [
-          "image/png",
-          "image/jpeg",
-          "image/webp",
-          "image/bmp",
-        ];
+        const validTypes = ["image/png", "image/jpeg", "image/webp", "image/bmp"];
         if (!validTypes.includes(file.type)) {
           showToast("Invalid file type. Please upload PNG, JPG, WEBP, or BMP.");
           return;
@@ -435,22 +1106,43 @@
           return;
         }
 
-        // Show original
+        state.originalFile = file;
+        state.imageUploaded = true;
+        state.editCount = 0;
+        state.imageHistory = [];
+        state.currentBlob = null;
+        if (state.currentBlobUrl) URL.revokeObjectURL(state.currentBlobUrl);
+        state.currentBlobUrl = null;
+
+        // Read as data URL for display
         const reader = new FileReader();
         reader.onload = (e) => {
+          state.originalDataUrl = e.target.result;
           originalImage.src = e.target.result;
         };
         reader.readAsDataURL(file);
 
-        // Show preview section
+        // Show UI
         uploadArea.style.display = "none";
         previewSection.classList.add("active");
         actions.style.display = "flex";
         downloadBtn.style.display = "none";
+        compareBtn.style.display = "none";
         resultImage.src = "";
-        loadingText.textContent = "Loading AI model…";
-        progressText.textContent =
-          "First run downloads ~40MB model (cached after)";
+        updateEditCount();
+        updateUndoBtn();
+
+        // Show chat FAB
+        chatFab.classList.add("visible");
+
+        // Show welcome notification badge
+        if (!state.chatOpen) {
+          chatBadge.style.display = "flex";
+        }
+
+        // Show loading for auto background removal
+        loadingText.textContent = "Loading AI model...";
+        progressText.textContent = "First run downloads ~40MB model (cached after)";
         loadingOverlay.classList.add("active");
 
         try {
@@ -458,35 +1150,85 @@
             progress: (key, current, total) => {
               if (key.includes("fetch")) {
                 const pct = total > 0 ? Math.round((current / total) * 100) : 0;
-                loadingText.textContent = "Downloading AI model…";
+                loadingText.textContent = "Downloading AI model...";
                 progressText.textContent = pct + "%";
               } else if (key.includes("compute")) {
-                loadingText.textContent = "Removing background…";
+                loadingText.textContent = "Removing background...";
                 progressText.textContent = "Processing";
               }
             },
           });
 
-          if (resultBlobUrl) URL.revokeObjectURL(resultBlobUrl);
-          resultBlobUrl = URL.createObjectURL(blob);
-          resultImage.src = resultBlobUrl;
+          pushToHistory(blob);
+          showResultBlob(blob);
           downloadBtn.style.display = "inline-flex";
+          compareBtn.style.display = "inline-flex";
+          state.editCount++;
+          updateEditCount();
+
+          // Add system message to chat
+          addChatMessage("system", "Image uploaded. Background removed automatically. Tell me what else you'd like to do!");
+          showSuggestions(["Remove an object", "Isolate a subject", "Reset to original"]);
         } catch (err) {
           console.error("Background removal error:", err);
           showToast(err.message || "Something went wrong. Please try again.");
+          // Still allow chat interaction even if auto-removal fails
+          addChatMessage("system", "Image uploaded. Background removal failed, but you can still tell me what to do!");
+          showSuggestions(["Remove background", "Remove an object", "Isolate a subject"]);
         } finally {
           loadingOverlay.classList.remove("active");
         }
       }
 
+      // ============================================================
+      //  IMAGE STATE & HISTORY
+      // ============================================================
+      function pushToHistory(blob) {
+        const blobUrl = URL.createObjectURL(blob);
+        state.imageHistory.push({ blob, blobUrl });
+        state.currentBlob = blob;
+        if (state.currentBlobUrl) URL.revokeObjectURL(state.currentBlobUrl);
+        state.currentBlobUrl = blobUrl;
+        updateUndoBtn();
+      }
+
+      function showResultBlob(blob) {
+        const url = state.imageHistory[state.imageHistory.length - 1]?.blobUrl;
+        if (url) {
+          resultImage.style.opacity = "0";
+          setTimeout(() => {
+            resultImage.src = url;
+            resultImage.style.opacity = "1";
+          }, 100);
+        }
+      }
+
+      function updateEditCount() {
+        if (state.editCount > 0) {
+          editCountEl.style.display = "inline";
+          editCountEl.textContent = state.editCount + (state.editCount === 1 ? " edit" : " edits");
+        } else {
+          editCountEl.style.display = "none";
+        }
+      }
+
+      function updateUndoBtn() {
+        undoBtn.disabled = state.imageHistory.length <= 1;
+      }
+
+      // ============================================================
+      //  GLOBAL ACTIONS
+      // ============================================================
       window.downloadResult = function () {
-        if (!resultBlobUrl) return;
+        const url = state.currentBlobUrl;
+        if (!url) return;
         const a = document.createElement("a");
-        a.href = resultBlobUrl;
-        a.download = "removed_bg.png";
+        a.href = url;
+        a.download = "edited_image.png";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+        showToast("Image downloaded!", "success");
       };
 
       window.resetAll = function () {
@@ -494,19 +1236,769 @@
         previewSection.classList.remove("active");
         actions.style.display = "none";
         downloadBtn.style.display = "none";
+        compareBtn.style.display = "none";
         originalImage.src = "";
         resultImage.src = "";
         fileInput.value = "";
-        if (resultBlobUrl) {
-          URL.revokeObjectURL(resultBlobUrl);
-          resultBlobUrl = null;
+        chatFab.classList.remove("visible");
+        chatPanel.classList.remove("open");
+        state.chatOpen = false;
+        state.imageUploaded = false;
+        state.editCount = 0;
+        state.chatMessages = [];
+        chatMessagesEl.innerHTML = "";
+        comparisonContainer.classList.remove("active");
+        state.comparisonVisible = false;
+
+        // Clean up blobs
+        state.imageHistory.forEach((h) => URL.revokeObjectURL(h.blobUrl));
+        state.imageHistory = [];
+        if (state.currentBlobUrl) URL.revokeObjectURL(state.currentBlobUrl);
+        state.currentBlobUrl = null;
+        state.currentBlob = null;
+        state.originalFile = null;
+        state.originalDataUrl = null;
+        updateEditCount();
+        updateUndoBtn();
+      };
+
+      window.appUndo = function () {
+        if (state.imageHistory.length <= 1) return;
+        // Remove latest
+        const removed = state.imageHistory.pop();
+        URL.revokeObjectURL(removed.blobUrl);
+
+        const prev = state.imageHistory[state.imageHistory.length - 1];
+        state.currentBlob = prev.blob;
+        state.currentBlobUrl = prev.blobUrl;
+        resultImage.src = prev.blobUrl;
+
+        state.editCount = Math.max(0, state.editCount - 1);
+        updateEditCount();
+        updateUndoBtn();
+
+        if (state.imageHistory.length === 0) {
+          downloadBtn.style.display = "none";
+          compareBtn.style.display = "none";
+        }
+
+        addChatMessage("system", "Undid last edit.");
+        showToast("Undid last edit.", "success");
+      };
+
+      window.toggleComparison = function () {
+        state.comparisonVisible = !state.comparisonVisible;
+        if (state.comparisonVisible && state.originalDataUrl && state.currentBlobUrl) {
+          comparisonBase.src = state.currentBlobUrl;
+          comparisonOriginal.src = state.originalDataUrl;
+          comparisonContainer.classList.add("active");
+          // Set initial slider position
+          requestAnimationFrame(() => {
+            const w = comparisonWrapper.offsetWidth;
+            setComparisonPosition(w / 2);
+          });
+        } else {
+          comparisonContainer.classList.remove("active");
         }
       };
 
-      function showToast(message) {
-        toast.textContent = message;
-        toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 4000);
+      // ============================================================
+      //  BEFORE/AFTER COMPARISON SLIDER
+      // ============================================================
+      let isDragging = false;
+
+      function setComparisonPosition(x) {
+        const rect = comparisonWrapper.getBoundingClientRect();
+        const w = rect.width;
+        const clampedX = Math.max(0, Math.min(x, w));
+        comparisonOverlay.style.width = clampedX + "px";
+        comparisonHandle.style.left = clampedX + "px";
+      }
+
+      comparisonHandle.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        e.preventDefault();
+      });
+      comparisonWrapper.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        const rect = comparisonWrapper.getBoundingClientRect();
+        setComparisonPosition(e.clientX - rect.left);
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const rect = comparisonWrapper.getBoundingClientRect();
+        setComparisonPosition(e.clientX - rect.left);
+      });
+      document.addEventListener("mouseup", () => (isDragging = false));
+
+      // Touch support
+      comparisonHandle.addEventListener("touchstart", (e) => {
+        isDragging = true;
+        e.preventDefault();
+      });
+      comparisonWrapper.addEventListener("touchstart", (e) => {
+        isDragging = true;
+        const rect = comparisonWrapper.getBoundingClientRect();
+        setComparisonPosition(e.touches[0].clientX - rect.left);
+      });
+      document.addEventListener("touchmove", (e) => {
+        if (!isDragging) return;
+        const rect = comparisonWrapper.getBoundingClientRect();
+        setComparisonPosition(e.touches[0].clientX - rect.left);
+      });
+      document.addEventListener("touchend", () => (isDragging = false));
+
+      // ============================================================
+      //  CHAT UI
+      // ============================================================
+      chatFab.addEventListener("click", () => {
+        state.chatOpen = !state.chatOpen;
+        chatPanel.classList.toggle("open", state.chatOpen);
+        chatFab.classList.toggle("open", state.chatOpen);
+        chatBadge.style.display = "none";
+
+        if (state.chatOpen && chatMessagesEl.children.length === 0) {
+          // Welcome message on first open
+          addChatMessage(
+            "ai",
+            "Hi! I'm your AI editing assistant. I can help you:\n\n" +
+              "- **Remove the background** from your image\n" +
+              "- **Remove specific objects** (e.g. \"remove the hat\")\n" +
+              "- **Isolate objects** (e.g. \"keep only the person\")\n" +
+              "- **Reset** to the original image\n\n" +
+              "What would you like to do?"
+          );
+          showSuggestions(["Remove background", "Remove an object", "Isolate a subject"]);
+        }
+        scrollChat();
+      });
+
+      function addChatMessage(role, text) {
+        const div = document.createElement("div");
+        div.className = "chat-msg " + role;
+
+        // Simple markdown: **bold**
+        let html = text
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\n/g, "<br>");
+        div.innerHTML = html;
+
+        chatMessagesEl.appendChild(div);
+        scrollChat();
+      }
+
+      function scrollChat() {
+        requestAnimationFrame(() => {
+          chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        });
+      }
+
+      function showSuggestions(suggestions) {
+        chatSuggestions.innerHTML = "";
+        suggestions.forEach((text) => {
+          const chip = document.createElement("button");
+          chip.className = "chat-suggestion";
+          chip.textContent = text;
+          chip.addEventListener("click", () => {
+            chatInput.value = text;
+            sendChatMessage();
+          });
+          chatSuggestions.appendChild(chip);
+        });
+      }
+
+      function clearSuggestions() {
+        chatSuggestions.innerHTML = "";
+      }
+
+      // Input handling
+      chatInput.addEventListener("input", () => {
+        chatSend.disabled = !chatInput.value.trim();
+        // Auto-resize
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 80) + "px";
+      });
+
+      chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendChatMessage();
+        }
+      });
+
+      chatSend.addEventListener("click", () => sendChatMessage());
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && state.chatOpen) {
+          state.chatOpen = false;
+          chatPanel.classList.remove("open");
+          chatFab.classList.remove("open");
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === "z" && state.imageUploaded) {
+          e.preventDefault();
+          window.appUndo();
+        }
+      });
+
+      // ============================================================
+      //  CHAT -> CLAUDE API
+      // ============================================================
+      async function sendChatMessage() {
+        const text = chatInput.value.trim();
+        if (!text || state.chatProcessing) return;
+
+        // Check if image is uploaded
+        if (!state.imageUploaded) {
+          addChatMessage("user", text);
+          addChatMessage("ai", "Please upload an image first, then I can help you edit it!");
+          chatInput.value = "";
+          chatSend.disabled = true;
+          return;
+        }
+
+        // Add user message to UI
+        addChatMessage("user", text);
+        chatInput.value = "";
+        chatInput.style.height = "auto";
+        chatSend.disabled = true;
+        clearSuggestions();
+
+        // Add to API messages
+        state.chatMessages.push({ role: "user", content: text });
+
+        // Show typing indicator
+        state.chatProcessing = true;
+        chatTyping.classList.add("active");
+        scrollChat();
+
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: state.chatMessages }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+
+          const data = await response.json();
+          chatTyping.classList.remove("active");
+
+          // Process response content blocks
+          let textResponse = "";
+          let toolCalls = [];
+
+          if (data.content) {
+            for (const block of data.content) {
+              if (block.type === "text") {
+                textResponse += block.text;
+              } else if (block.type === "tool_use") {
+                toolCalls.push(block);
+              }
+            }
+          }
+
+          // Show text response if any
+          if (textResponse) {
+            addChatMessage("ai", textResponse);
+          }
+
+          // Add assistant response to conversation history
+          state.chatMessages.push({ role: "assistant", content: data.content });
+
+          // Execute tool calls
+          if (toolCalls.length > 0) {
+            for (const toolCall of toolCalls) {
+              await executeToolCall(toolCall);
+            }
+          } else {
+            // Show contextual suggestions
+            showContextualSuggestions();
+          }
+        } catch (err) {
+          chatTyping.classList.remove("active");
+          console.error("Chat error:", err);
+          addChatMessage("ai", "Sorry, I encountered an error. Please try again.");
+          showSuggestions(["Remove background", "Remove an object", "Reset image"]);
+        } finally {
+          state.chatProcessing = false;
+        }
+      }
+
+      function showContextualSuggestions() {
+        if (state.editCount === 0) {
+          showSuggestions(["Remove background", "Remove an object", "Isolate a subject"]);
+        } else {
+          showSuggestions(["Remove an object", "Isolate a subject", "Undo last edit", "Reset to original"]);
+        }
+      }
+
+      // ============================================================
+      //  TOOL EXECUTION
+      // ============================================================
+      async function executeToolCall(toolCall) {
+        const { id, name, input } = toolCall;
+        let result = "";
+
+        try {
+          switch (name) {
+            case "remove_background":
+              result = await opRemoveBackground();
+              break;
+            case "remove_object":
+              result = await opRemoveObject(input.target);
+              break;
+            case "isolate_object":
+              result = await opIsolateObject(input.target);
+              break;
+            case "reset_image":
+              result = opResetImage();
+              break;
+            default:
+              result = "Unknown operation.";
+          }
+        } catch (err) {
+          console.error("Tool execution error:", err);
+          result = "Operation failed: " + (err.message || "Unknown error");
+          addChatMessage("system", "Operation failed. Try again or try a different command.");
+        }
+
+        // Send tool result back to Claude for follow-up
+        state.chatMessages.push({
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: id,
+              content: result,
+            },
+          ],
+        });
+
+        // Get Claude's follow-up response
+        try {
+          chatTyping.classList.add("active");
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: state.chatMessages }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            chatTyping.classList.remove("active");
+
+            let followUp = "";
+            for (const block of data.content || []) {
+              if (block.type === "text") followUp += block.text;
+            }
+            if (followUp) {
+              addChatMessage("ai", followUp);
+              state.chatMessages.push({ role: "assistant", content: data.content });
+            }
+          } else {
+            chatTyping.classList.remove("active");
+          }
+        } catch {
+          chatTyping.classList.remove("active");
+        }
+
+        showContextualSuggestions();
+      }
+
+      // ============================================================
+      //  OPERATION: REMOVE BACKGROUND
+      // ============================================================
+      async function opRemoveBackground() {
+        addChatMessage("system", "Removing background...");
+        showOverlay("Removing background...", "Processing");
+
+        const sourceBlob = state.currentBlob || state.originalFile;
+
+        const blob = await removeBackground(sourceBlob, {
+          progress: (key, current, total) => {
+            if (key.includes("fetch")) {
+              const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+              loadingText.textContent = "Downloading model...";
+              progressText.textContent = pct + "%";
+            } else if (key.includes("compute")) {
+              loadingText.textContent = "Removing background...";
+              progressText.textContent = "Processing";
+            }
+          },
+        });
+
+        pushToHistory(blob);
+        showResultBlob(blob);
+        hideOverlay();
+        downloadBtn.style.display = "inline-flex";
+        compareBtn.style.display = "inline-flex";
+        state.editCount++;
+        updateEditCount();
+
+        return "Background removed successfully.";
+      }
+
+      // ============================================================
+      //  OPERATION: REMOVE OBJECT (CLIPSeg + Canvas fill)
+      // ============================================================
+      async function opRemoveObject(target) {
+        addChatMessage("system", `Detecting "${target}" in the image...`);
+        showOverlay("Detecting object...", "Loading segmentation model");
+
+        // Load the segmentation pipeline
+        await ensureSegModel();
+
+        showOverlay("Segmenting...", `Looking for "${target}"`);
+
+        // Get the current image as an Image element
+        const img = await blobToImage(state.currentBlob || state.originalFile);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        // Run CLIPSeg segmentation
+        const mask = await runSegmentation(state.currentBlob || state.originalFile, target);
+
+        if (!mask) {
+          hideOverlay();
+          return `Could not detect "${target}" in the image. Try a different description.`;
+        }
+
+        showOverlay("Removing object...", "Filling area");
+
+        // Apply inpainting (simple fill)
+        const resultBlob = await applySimpleFill(canvas, ctx, mask, img.naturalWidth, img.naturalHeight);
+
+        pushToHistory(resultBlob);
+        showResultBlob(resultBlob);
+        hideOverlay();
+        downloadBtn.style.display = "inline-flex";
+        compareBtn.style.display = "inline-flex";
+        state.editCount++;
+        updateEditCount();
+
+        return `Successfully removed "${target}" from the image.`;
+      }
+
+      // ============================================================
+      //  OPERATION: ISOLATE OBJECT (CLIPSeg + Alpha mask)
+      // ============================================================
+      async function opIsolateObject(target) {
+        addChatMessage("system", `Detecting "${target}" in the image...`);
+        showOverlay("Detecting object...", "Loading segmentation model");
+
+        await ensureSegModel();
+
+        showOverlay("Segmenting...", `Looking for "${target}"`);
+
+        const img = await blobToImage(state.currentBlob || state.originalFile);
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0);
+
+        const mask = await runSegmentation(state.currentBlob || state.originalFile, target);
+
+        if (!mask) {
+          hideOverlay();
+          return `Could not detect "${target}" in the image. Try a different description.`;
+        }
+
+        showOverlay("Isolating...", "Applying mask");
+
+        // Resize mask to image dimensions if needed
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+        const maskWidth = Math.round(Math.sqrt(mask.length * (imgW / imgH)));
+        const maskHeight = Math.round(mask.length / maskWidth);
+
+        const fullMask = new Float32Array(imgW * imgH);
+        for (let y = 0; y < imgH; y++) {
+          for (let x = 0; x < imgW; x++) {
+            const mx = Math.min(Math.floor((x / imgW) * maskWidth), maskWidth - 1);
+            const my = Math.min(Math.floor((y / imgH) * maskHeight), maskHeight - 1);
+            fullMask[y * imgW + x] = mask[my * maskWidth + mx];
+          }
+        }
+
+        // Apply alpha mask — keep only the detected area
+        const imageData = ctx.getImageData(0, 0, imgW, imgH);
+        const pixels = imageData.data;
+
+        for (let i = 0; i < fullMask.length; i++) {
+          // fullMask[i] is 0 or 1, where 1 = the object
+          const alpha = Math.round(fullMask[i] * 255);
+          pixels[i * 4 + 3] = alpha; // Set alpha channel
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        const resultBlob = await new Promise((resolve) =>
+          canvas.toBlob(resolve, "image/png")
+        );
+
+        pushToHistory(resultBlob);
+        showResultBlob(resultBlob);
+        hideOverlay();
+        downloadBtn.style.display = "inline-flex";
+        compareBtn.style.display = "inline-flex";
+        state.editCount++;
+        updateEditCount();
+
+        return `Successfully isolated "${target}" from the image.`;
+      }
+
+      // ============================================================
+      //  OPERATION: RESET IMAGE
+      // ============================================================
+      function opResetImage() {
+        if (!state.originalFile) return "No original image to reset to.";
+
+        // Clear history except we'll re-show original
+        state.imageHistory.forEach((h) => URL.revokeObjectURL(h.blobUrl));
+        state.imageHistory = [];
+        state.currentBlob = null;
+        if (state.currentBlobUrl) URL.revokeObjectURL(state.currentBlobUrl);
+        state.currentBlobUrl = null;
+        state.editCount = 0;
+        updateEditCount();
+        updateUndoBtn();
+
+        resultImage.src = "";
+        downloadBtn.style.display = "none";
+        compareBtn.style.display = "none";
+        comparisonContainer.classList.remove("active");
+        state.comparisonVisible = false;
+
+        showToast("Image reset to original.", "success");
+        return "Image has been reset to its original state. All edits cleared.";
+      }
+
+      // ============================================================
+      //  SEGMENTATION (Transformers.js CLIPSeg)
+      // ============================================================
+      let transformersModule = null;
+
+      async function ensureSegModel() {
+        if (state.segPipeline) return;
+
+        addChatMessage("system", "Downloading segmentation model (~5MB, cached after first use)...");
+
+        if (!transformersModule) {
+          transformersModule = await import(
+            "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1/+esm"
+          );
+        }
+
+        const { pipeline } = transformersModule;
+
+        state.segPipeline = await pipeline(
+          "image-segmentation",
+          "Xenova/clipseg-rd64-refined",
+          { dtype: "fp32" }
+        );
+
+        state.segModelLoaded = true;
+        addChatMessage("system", "Segmentation model loaded!");
+      }
+
+      async function runSegmentation(imageSource, textPrompt) {
+        if (!state.segPipeline) return null;
+
+        try {
+          // Convert blob to a data URL for the pipeline
+          let imageUrl;
+          if (imageSource instanceof Blob || imageSource instanceof File) {
+            imageUrl = await blobToDataUrl(imageSource);
+          } else {
+            imageUrl = imageSource;
+          }
+
+          const result = await state.segPipeline(imageUrl, {
+            candidate_labels: [textPrompt],
+          });
+
+          if (!result || result.length === 0) return null;
+
+          // The result contains a mask. Extract it.
+          const segResult = result[0];
+
+          if (segResult.mask) {
+            // Transformers.js v3 returns a RawImage mask
+            const maskData = segResult.mask;
+            const width = maskData.width;
+            const height = maskData.height;
+            const data = maskData.data;
+
+            // Normalize mask to 0-1 range
+            const mask = new Float32Array(width * height);
+            let maxVal = 0;
+            for (let i = 0; i < data.length; i++) {
+              if (data[i] > maxVal) maxVal = data[i];
+            }
+            if (maxVal > 0) {
+              for (let i = 0; i < data.length; i++) {
+                mask[i] = data[i] / maxVal;
+              }
+            }
+
+            // Apply threshold to create a cleaner mask
+            const threshold = 0.5;
+            for (let i = 0; i < mask.length; i++) {
+              mask[i] = mask[i] > threshold ? 1.0 : 0.0;
+            }
+
+            return mask;
+          }
+
+          // If mask is in score format
+          if (segResult.score !== undefined) {
+            return null; // Not a usable mask format
+          }
+
+          return null;
+        } catch (err) {
+          console.error("Segmentation error:", err);
+          return null;
+        }
+      }
+
+      // ============================================================
+      //  SIMPLE FILL INPAINTING
+      // ============================================================
+      async function applySimpleFill(canvas, ctx, mask, width, height) {
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const pixels = imageData.data;
+
+        // Resize mask if needed (CLIPSeg may output different resolution)
+        const maskWidth = Math.round(Math.sqrt(mask.length * (width / height)));
+        const maskHeight = Math.round(mask.length / maskWidth);
+
+        // Create a full-resolution mask by nearest-neighbor sampling
+        const fullMask = new Float32Array(width * height);
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const mx = Math.min(Math.floor((x / width) * maskWidth), maskWidth - 1);
+            const my = Math.min(Math.floor((y / height) * maskHeight), maskHeight - 1);
+            fullMask[y * width + x] = mask[my * maskWidth + mx];
+          }
+        }
+
+        // Step 1: Collect surrounding pixel colors for fill
+        // Average the non-masked pixels nearby for each masked pixel
+        const radius = 15;
+
+        // Create a blurred version of the image for fill (using the original pixels)
+        const blurCanvas = document.createElement("canvas");
+        blurCanvas.width = width;
+        blurCanvas.height = height;
+        const blurCtx = blurCanvas.getContext("2d");
+        blurCtx.filter = `blur(${radius}px)`;
+        blurCtx.drawImage(canvas, 0, 0);
+        blurCtx.filter = "none";
+
+        // Draw again without filter to get clean surrounding areas
+        const blurData = blurCtx.getImageData(0, 0, width, height);
+        const blurPixels = blurData.data;
+
+        // Step 2: Replace masked pixels with blurred fill
+        for (let i = 0; i < fullMask.length; i++) {
+          if (fullMask[i] > 0.5) {
+            const pi = i * 4;
+            pixels[pi] = blurPixels[pi];       // R
+            pixels[pi + 1] = blurPixels[pi + 1]; // G
+            pixels[pi + 2] = blurPixels[pi + 2]; // B
+            pixels[pi + 3] = 255;               // A
+          }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        // Step 3: Smooth edges — apply a small blur on just the mask boundary
+        // Draw the result, then softly blend the edges
+        const edgeCanvas = document.createElement("canvas");
+        edgeCanvas.width = width;
+        edgeCanvas.height = height;
+        const edgeCtx = edgeCanvas.getContext("2d");
+        edgeCtx.drawImage(canvas, 0, 0);
+
+        // Slightly blur the whole thing and composite
+        edgeCtx.filter = "blur(2px)";
+        edgeCtx.globalCompositeOperation = "source-over";
+        edgeCtx.globalAlpha = 0.3;
+        edgeCtx.drawImage(canvas, 0, 0);
+        edgeCtx.filter = "none";
+        edgeCtx.globalAlpha = 1;
+
+        // Write back to original canvas — only the masked area
+        const edgeData = edgeCtx.getImageData(0, 0, width, height);
+        const edgePixels = edgeData.data;
+        const finalData = ctx.getImageData(0, 0, width, height);
+        const finalPixels = finalData.data;
+
+        // Dilate the mask slightly for edge blending
+        for (let i = 0; i < fullMask.length; i++) {
+          if (fullMask[i] > 0.5) {
+            const pi = i * 4;
+            finalPixels[pi] = edgePixels[pi];
+            finalPixels[pi + 1] = edgePixels[pi + 1];
+            finalPixels[pi + 2] = edgePixels[pi + 2];
+            finalPixels[pi + 3] = edgePixels[pi + 3];
+          }
+        }
+        ctx.putImageData(finalData, 0, 0);
+
+        return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+      }
+
+      // ============================================================
+      //  HELPERS
+      // ============================================================
+      function showOverlay(text, progress) {
+        loadingText.textContent = text;
+        progressText.textContent = progress || "";
+        loadingOverlay.classList.add("active");
+      }
+
+      function hideOverlay() {
+        loadingOverlay.classList.remove("active");
+      }
+
+      function blobToImage(blob) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          let objectUrl = null;
+          img.onload = () => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            resolve(img);
+          };
+          img.onerror = (err) => {
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            reject(err);
+          };
+          if (blob instanceof File || blob instanceof Blob) {
+            objectUrl = URL.createObjectURL(blob);
+            img.src = objectUrl;
+          } else {
+            img.src = blob;
+          }
+        });
+      }
+
+      function blobToDataUrl(blob) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
       }
     </script>
   </body>
